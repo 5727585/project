@@ -105,6 +105,7 @@ int main(void)
 	printf("후위 순회=");
 	postorder_iter(root);
 	printf("\n");
+	printf("\n");
 
 	return 0;
 }

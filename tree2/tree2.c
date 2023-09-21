@@ -5,83 +5,32 @@
 typedef struct TreeNode {
 	int data;
 	struct TreeNode* left, * right;
-}TreeNode;
+	int is_thread; //만약 오른쪽 링크가 스레드이면 TRUE
+} TreeNode;
 
-#define SIZE 100
-int top = -1;
-TreeNode* stack[SIZE];
-
-void push(TreeNode* p)
+TreeNode* find_successor(TreeNode* p)
 {
-	if (top < SIZE - 1)
-		stack[++top] = p;
+	// q는 p의 오른쪽 포인터
+	TreeNode* q = p->right;
+	// 만약 오른쪽 포인터가 NULL이거나 스레드이면 오른쪽 포인터를 반환
+	if (q == NULL || p->is_thread == TRUE)
+		return q;
+
+	// 만약 오른쪽 자식이면 다시 가장 왼쪽 노드로 이동
+	while (q->left != NULL) q = q->left;
+	return q;
 }
 
-TreeNode* pop()
+void thread_inorder(TreeNode* t)
 {
-	TreeNode* p = NULL;
-	if (top >= 0)
-		p = stack[top--];
-	return p;
-}
-
-int is_empty()
-{
-	return top == -1;
-}
-
-void inorder_iter(TreeNode* root)
-{
-	while (1) {
-		for (; root; root = root->left)
-			push(root);
-		root = pop();
-		if (!root) break;
-		printf("[%d] ", root->data);
-		root = root->right;
-	}
-}
-
-void preorder_iter(TreeNode* root)
-{
-	push(root);
-	while (!is_empty()) {
-		root = pop();
-		printf("[%d] ", root->data);
-
-		if (root->right)
-			push(root->right);
-		if (root->left)
-			push(root->left);
-	}
-}
-
-
-void postorder_iter(TreeNode* root)
-{
-	if (root == NULL)
-		return;
-
-	TreeNode* prev = NULL;
-	do {
-		while (root) {
-			push(root);
-			root = root->left;
-		}
-
-		while (root == NULL && top >= 0) {
-			root = stack[top];
-			if (root->right == NULL || root->right == prev) {
-				printf("[%d] ", root->data);
-				pop();
-				prev = root;
-				root = NULL;
-			}
-			else {
-				root = root->right;
-			}
-		}
-	} while (top >= 0);
+	TreeNode* q;
+	q = t;
+	while (q->left) q = q->left;// 가장 왼쪽 노드로 간다.
+	do
+	{
+		printf("%c ", q->data);// 데이터 출력
+		q = find_successor(q); // 후속자 함수 호출
+	} while (q);			// NULL이 아니면
 }
 
 TreeNode n1 = { 1, NULL, NULL };
@@ -96,14 +45,6 @@ int main(void)
 {
 	printf("중위 순회=");
 	inorder_iter(root);
-	printf("\n");
-
-	printf("전위 순회=");
-	preorder_iter(root);
-	printf("\n");
-
-	printf("후위 순회=");
-	postorder_iter(root);
 	printf("\n");
 
 	return 0;

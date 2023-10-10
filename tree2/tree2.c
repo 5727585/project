@@ -1,111 +1,113 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <memory.h>
 
+typedef int element;
 typedef struct TreeNode {
-	int data;
+	element key;
 	struct TreeNode* left, * right;
 }TreeNode;
 
-#define SIZE 100
-int top = -1;
-TreeNode* stack[SIZE];
-
-void push(TreeNode* p)
+TreeNode* search(TreeNode* node, int key)
 {
-	if (top < SIZE - 1)
-		stack[++top] = p;
-}
-
-TreeNode* pop()
-{
-	TreeNode* p = NULL;
-	if (top >= 0)
-		p = stack[top--];
-	return p;
-}
-
-int is_empty()
-{
-	return top == -1;
-}
-
-void inorder_iter(TreeNode* root)
-{
-	while (1) {
-		for (; root; root = root->left)
-			push(root);
-		root = pop();
-		if (!root) break;
-		printf("[%d] ", root->data);
-		root = root->right;
+	while (node != NULL) {
+		if (key == node->key) return node;
+		else if (key < node->key)
+			node = node->left;
+		else
+			node = node->right;
 	}
+	return NULL;
 }
 
-void preorder_iter(TreeNode* root)
+TreeNode* new_node(int item)
 {
-	push(root);
-	while (!is_empty()) {
-		root = pop();
-		printf("[%d] ", root->data);
-
-		if (root->right)
-			push(root->right);
-		if (root->left)
-			push(root->left);
-	}
+	TreeNode* temp = (TreeNode*)malloc(sizeof(TreeNode));
+	temp->key = item;
+	temp->left = temp->right = NULL;
+	return temp;
 }
 
-
-void postorder_iter(TreeNode* root)
+TreeNode* insert_node(TreeNode* node, int key)
 {
-	if (root == NULL)
-		return;
+	if (node == NULL) return new_node(key);
+	if (key < node->key)
+		node->left = insert_node(node->left, key);
+	else if (key > node->key)
+		node->right = insert_node(node->right, key);
 
-	TreeNode* prev = NULL;
-	do {
-		while (root) {
-			push(root);
-			root = root->left;
+	return node;
+}
+
+TreeNode* min_value_node(TreeNode* node)
+{
+	TreeNode* current = node;
+
+	while (current->left != NULL)
+		current = current->left;
+
+	return current;
+}
+
+TreeNode* delete_node(TreeNode* root, int key)
+{
+	if (root == NULL) return root;
+
+	if (key < root->key)
+		root->left = delete_node(root->left, key);
+	else if (key > root->key)
+		root->right = delete_node(root->right, key);
+	else {
+		if (root->left == NULL) {
+			TreeNode* temp = root->right;
+			free(root);
+			return temp;
+		}
+		else if (root->right == NULL) {
+			TreeNode* temp = root->left;
+			free(root);
+			return temp;
 		}
 
-		while (root == NULL && top >= 0) {
-			root = stack[top];
-			if (root->right == NULL || root->right == prev) {
-				printf("[%d] ", root->data);
-				pop();
-				prev = root;
-				root = NULL;
-			}
-			else {
-				root = root->right;
-			}
-		}
-	} while (top >= 0);
+		TreeNode* temp = min_value_node(root->right);
+
+		root->key = temp->key;
+		root->right = delete_node(root->right, temp->key);
+	}
+	return root;
 }
 
-TreeNode n1 = { 1, NULL, NULL };
-TreeNode n2 = { 4, &n1, NULL };
-TreeNode n3 = { 16, NULL, NULL };
-TreeNode n4 = { 25, NULL, NULL };
-TreeNode n5 = { 20, &n3, &n4 };
-TreeNode n6 = { 15, &n2, &n5 };
-TreeNode* root = &n6;
+void inorder(TreeNode* root) {
+	if (root) {
+		inorder(root->left);
+		printf("[%d] ", root->key);
+		inorder(root->right);
+	}
+}
 
 int main(void)
 {
-	printf("중위 순회=");
-	inorder_iter(root);
-	printf("\n");
+	TreeNode* root = NULL;
+	TreeNode* tmp = NULL;
 
-	printf("전위 순회=");
-	preorder_iter(root);
-	printf("\n");
-
-	printf("후위 순회=");
-	postorder_iter(root);
-	printf("\n");
-
-	return 0;
+	root = insert_node(root, 60);
+	root = insert_node(root, 41);
+	root = insert_node(root, 16);
+	root = insert_node(root, 25);
+	root = insert_node(root, 53);
+	root = insert_node(root, 46);
+	root = insert_node(root, 42);
+	root = insert_node(root, 55);
+	root = insert_node(root, 74);
+	root = insert_node(root, 65);
+	root = insert_node(root, 63);
+	root = insert_node(root, 62);
+	root = insert_node(root, 64);
+	root = insert_node(root, 70);
+	
+	printf("이진 탐색 트리 중위 순회 결과\n");
+	inorder(root);
+	printf("\n\n");
+	if (search(root, 60) != NULL)
+		printf("");
 }
 

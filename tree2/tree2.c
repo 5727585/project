@@ -1,111 +1,96 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <memory.h>
+#define MAX_ELEMENT 200
 
-typedef struct TreeNode {
-	int data;
-	struct TreeNode* left, * right;
-}TreeNode;
+typedef struct Element {
+	int key;
+} element;
 
-#define SIZE 100
-int top = -1;
-TreeNode* stack[SIZE];
+typedef struct HeepType{
+	element heap[MAX_ELEMENT];
+	int heap_size;
+} HeapType;
 
-void push(TreeNode* p)
+// 생성 함수
+HeapType* create()
 {
-	if (top < SIZE - 1)
-		stack[++top] = p;
+	return (HeapType*)malloc(sizeof(HeapType));
 }
 
-TreeNode* pop()
-{
-	TreeNode* p = NULL;
-	if (top >= 0)
-		p = stack[top--];
-	return p;
+int is_empty(HeapType * h){
+	return(h->heap_size == 0);
 }
 
-int is_empty()
-{
-	return top == -1;
+is_full(HeapType* h) {
+	return(h->heap_size == (MAX_ELEMENT));
 }
 
-void inorder_iter(TreeNode* root)
+// 초기화 함수
+void init(HeapType* h)
 {
-	while (1) {
-		for (; root; root = root->left)
-			push(root);
-		root = pop();
-		if (!root) break;
-		printf("[%d] ", root->data);
-		root = root->right;
+	h->heap_size = 0;
+}
+// 현재 요소의 개수가 heap_size인 히프 h에 item을 삽입한다.
+// 삽입 함수
+void insert_max_heap(HeapType* h, element item)
+{
+	int i;
+	i = ++(h->heap_size);
+
+	//  트리를 거슬러 올라가면서 부모 노드와 비교하는 과정
+	while ((i > 1) && (item.key > h->heap[i / 2].key)) {
+		h->heap[i] = h->heap[i / 2];
+		i = i/2;
 	}
+	h->heap[i] = item;     // 새로운 노드를 삽입
 }
 
-void preorder_iter(TreeNode* root)
+// 삭제 함수
+element delete_max_heap(HeapType* h)
 {
-	push(root);
-	while (!is_empty()) {
-		root = pop();
-		printf("[%d] ", root->data);
+	int parent, child;
+	element item, temp;
 
-		if (root->right)
-			push(root->right);
-		if (root->left)
-			push(root->left);
+	item = h->heap[1];
+	temp = h->heap[(h->heap_size)--];
+	parent = 1;
+	child = 2;
+	while (child <= h->heap_size) {
+		// 현재 노드의 자식노드 중 더 작은 자식노드를 찾는다.
+		if ((child < h->heap_size) &&
+			(h->heap[child].key) < h->heap[child + 1].key)
+			child++;
+		if (temp.key >= h->heap[child].key) break;
+		// 한 단계 아래로 이동
+		h->heap[parent] = h->heap[child];
+		parent = child;
+		child *= 2;
 	}
+	h->heap[parent] = temp;
+	return item;
 }
-
-
-void postorder_iter(TreeNode* root)
-{
-	if (root == NULL)
-		return;
-
-	TreeNode* prev = NULL;
-	do {
-		while (root) {
-			push(root);
-			root = root->left;
-		}
-
-		while (root == NULL && top >= 0) {
-			root = stack[top];
-			if (root->right == NULL || root->right == prev) {
-				printf("[%d] ", root->data);
-				pop();
-				prev = root;
-				root = NULL;
-			}
-			else {
-				root = root->right;
-			}
-		}
-	} while (top >= 0);
-}
-
-TreeNode n1 = { 1, NULL, NULL };
-TreeNode n2 = { 4, &n1, NULL };
-TreeNode n3 = { 16, NULL, NULL };
-TreeNode n4 = { 25, NULL, NULL };
-TreeNode n5 = { 20, &n3, &n4 };
-TreeNode n6 = { 15, &n2, &n5 };
-TreeNode* root = &n6;
-
 int main(void)
 {
-	printf("중위 순회=");
-	inorder_iter(root);
-	printf("\n");
+	element e1 = { 10 }, e2 = { 5 }, e3 = { 30 };
+	element e4, e5, e6;
+	HeapType* heap;
 
-	printf("전위 순회=");
-	preorder_iter(root);
-	printf("\n");
+	heap = create(); 	// 히프 생성
+	init(heap);	// 초기화
 
-	printf("후위 순회=");
-	postorder_iter(root);
-	printf("\n");
+	// 삽입
+	insert_max_heap(heap, e1);
+	insert_max_heap(heap, e2);
+	insert_max_heap(heap, e3);
 
+	// 삭제
+	e4 = delete_max_heap(heap);
+	printf("< %d > ", e4.key);
+	e5 = delete_max_heap(heap);
+	printf("< %d > ", e5.key);
+	e6 = delete_max_heap(heap);
+	printf("< %d > \n", e6.key);
+
+	free(heap);
 	return 0;
 }
-

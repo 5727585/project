@@ -1,111 +1,126 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <memory.h>
 
-typedef struct TreeNode {
-	int data;
-	struct TreeNode* left, * right;
-}TreeNode;
+#define TRUE 1
+#define FALSE 0
 
-#define SIZE 100
-int top = -1;
-TreeNode* stack[SIZE];
+#define MAX_VERTICES 100
+#define INF 1000
 
-void push(TreeNode* p)
+int parent[MAX_VERTICES];
+
+void set_init(int n)
 {
-	if (top < SIZE - 1)
-		stack[++top] = p;
+	for (int i = 0; i < n; i++)
+		parent[i] = -1;
 }
 
-TreeNode* pop()
+int set_find(int curr)
 {
-	TreeNode* p = NULL;
-	if (top >= 0)
-		p = stack[top--];
-	return p;
+	if (parent[curr] == -1)
+		return curr;
+	while (parent[curr] != -1) curr = parent[curr];
+	return curr;
 }
 
-int is_empty()
+void set_union(int a, int b)
 {
-	return top == -1;
+	int root1 = set_find(a);
+	int root2 = set_find(b);
+	if (root1 != root2)
+		parent[root1] = root2;
 }
 
-void inorder_iter(TreeNode* root)
+struct Edge {
+	int start, end, weight;
+};
+
+typedef struct GraphType {
+	int n;
+	int nvertex;
+	struct Edge edges[2 * MAX_VERTICES];
+}GraphType;
+
+void graph_init(GraphType* g)
 {
-	while (1) {
-		for (; root; root = root->left)
-			push(root);
-		root = pop();
-		if (!root) break;
-		printf("[%d] ", root->data);
-		root = root->right;
+	g->n = g->nvertex = 0;
+	for (int i = 0; i < 2 * MAX_VERTICES; i++) {
+		g->edges[i].start = 0;
+		g->edges[i].end = 0;
+		g->edges[i].weight = INF;
 	}
 }
 
-void preorder_iter(TreeNode* root)
+void insert_edge(GraphType* g, int start, int end, int w)
 {
-	push(root);
-	while (!is_empty()) {
-		root = pop();
-		printf("[%d] ", root->data);
+	g->edges[g->n].start = start;
+	g->edges[g->n].end = end;
+	g->edges[g->n].weight = w;
+	g->n++;
+}
 
-		if (root->right)
-			push(root->right);
-		if (root->left)
-			push(root->left);
+
+int compare(const void* a, const void* b)
+{
+	struct Edge* x = (struct Edge*)a;
+	struct Edge* y = (struct Edge*)b;
+	return (x->weight - y->weight);
+}
+
+void kruskal(GraphType* g)
+{
+	int edge_accepted = 0;
+	int uset, vset;
+	struct Edge e;
+
+	set_init(g->nvertex);
+	qsort(g->edges, g->n, sizeof(struct Edge), compare);
+
+	printf("크루스칼 최소 신장 트리 알고리즘 \n");
+	int i = 0;
+	while (edge_accepted < (g->nvertex - 1))
+	{
+		e = g->edges[i];
+		uset = set_find(e.start);
+		vset = set_find(e.end);
+		if (uset != vset) {
+			printf("간선 (%d,%d) %d 선택\n", e.start, e.end, e.weight);
+			edge_accepted++;
+			set_union(uset, vset);
+		}
+		i++;
 	}
 }
-
-
-void postorder_iter(TreeNode* root)
-{
-	if (root == NULL)
-		return;
-
-	TreeNode* prev = NULL;
-	do {
-		while (root) {
-			push(root);
-			root = root->left;
-		}
-
-		while (root == NULL && top >= 0) {
-			root = stack[top];
-			if (root->right == NULL || root->right == prev) {
-				printf("[%d] ", root->data);
-				pop();
-				prev = root;
-				root = NULL;
-			}
-			else {
-				root = root->right;
-			}
-		}
-	} while (top >= 0);
-}
-
-TreeNode n1 = { 1, NULL, NULL };
-TreeNode n2 = { 4, &n1, NULL };
-TreeNode n3 = { 16, NULL, NULL };
-TreeNode n4 = { 25, NULL, NULL };
-TreeNode n5 = { 20, &n3, &n4 };
-TreeNode n6 = { 15, &n2, &n5 };
-TreeNode* root = &n6;
 
 int main(void)
 {
-	printf("중위 순회=");
-	inorder_iter(root);
-	printf("\n");
+	GraphType* g;
+	g = (GraphType*)malloc(sizeof(GraphType));
+	graph_init(g);
 
-	printf("전위 순회=");
-	preorder_iter(root);
-	printf("\n");
+	g->nvertex = 10;
+	insert_edge(g, 1, 6, 11);
+	insert_edge(g, 6, 5, 9);
+	insert_edge(g, 5, 9, 18);
+	insert_edge(g, 9, 10, 10);
+	insert_edge(g, 10, 8, 15);
+	insert_edge(g, 8, 7, 13);
+	insert_edge(g, 7, 1, 12);
+	insert_edge(g, 2, 1, 3);
+	insert_edge(g, 2, 7, 8);
+	insert_edge(g, 2, 3, 5);
+	insert_edge(g, 2, 4, 4);
+	insert_edge(g, 2, 5, 1);
+	insert_edge(g, 2, 6, 7);
+	insert_edge(g, 3, 7, 6);
+	insert_edge(g, 3, 8, 5);
+	insert_edge(g, 3, 4, 14);
+	insert_edge(g, 4, 8, 14);
+	insert_edge(g, 4, 10, 16);
+	insert_edge(g, 4, 5, 13);
+	insert_edge(g, 5, 10, 17);
 
-	printf("후위 순회=");
-	postorder_iter(root);
-	printf("\n");
-
+	kruskal(g);
+	free(g);
 	return 0;
 }
-
